@@ -1,0 +1,29 @@
+@startuml uc_0_vue_ensemble
+!include _style.iuml
+title Cas d'utilisation – Vue d'ensemble
+
+actor "Employé" as EMP
+actor "Manager (N+1)" as MGR
+actor "Responsable RH\n(admin fonctionnel)" as RH
+actor "Administrateur\nsystème" as ADM
+actor "Système\n(Odoo / Cron)" as SYS
+
+MGR -|> EMP
+RH -|> EMP
+
+rectangle "Module insea_hr_leave_custom" {
+  usecase "Gérer ses demandes\nd'absence et de congé" as UC1
+  usecase "Valider / refuser\nles demandes" as UC2
+  usecase "Gérer les soldes et\nparamétrer les règles RH" as UC3
+  usecase "Administrer le module\n(utilisateurs, groupes, hiérarchie)" as UC4
+  usecase "Exécuter les traitements\nautomatiques" as UC5
+}
+
+EMP -- UC1
+MGR -- UC2
+RH  -- UC2
+RH  -- UC3
+ADM -- UC4
+UC5 -- SYS
+
+@enduml

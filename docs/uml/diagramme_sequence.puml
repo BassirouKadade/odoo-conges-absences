@@ -1,0 +1,71 @@
+@startuml diagramme_sequence
+' ============================================================
+'  Diagramme de séquence : soumission puis validation d'un congé payé
+'  (méthodes réellement implémentées dans insea_leave_request.py)
+' ============================================================
+skinparam shadowing false
+skinparam defaultFontSize 12
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 12
+skinparam BoxPadding 8
+skinparam sequence {
+  ArrowColor #555555
+  LifeLineBorderColor #9AAFC7
+  ParticipantBackgroundColor #F5F9FF
+  ParticipantBorderColor #3A6EA5
+  ActorBackgroundColor #F5F9FF
+  ActorBorderColor #3A6EA5
+}
+title Soumission et validation d'un congé payé
+
+actor "Employé" as EMP
+actor "Manager N+1" as MGR
+actor "Responsable RH" as RH
+participant "insea.leave.request" as REQ
+participant "hr.employee" as HRE
+participant "mail.thread /\nmail.activity" as MAIL
+participant "Mailpit\n(SMTP)" as SMTP
+
+== Soumission ==
+EMP -> REQ : action_submit()
+activate REQ
+REQ -> REQ : _check_state(['draft'])
+REQ -> REQ : write(state = 'submitted')
+note right of REQ
+  @api.constrains déclenchées :
+  _check_overlap, _check_balance,
+  _check_notice_period,
+  _check_monthly_exit_limit
+end note
+REQ -> HRE : leave_balance (champ calculé)
+HRE --> REQ : solde
+alt règle non respectée
+  REQ --> EMP : ValidationError (message explicite)
+else contrôles réussis
+  REQ -> MAIL : activity_schedule(« Demande à approuver », manager)
+  MAIL -> SMTP : e-mail d'activité au manager
+  REQ --> EMP : état « Soumis »
+end
+deactivate REQ
+
+== Approbation du manager ==
+MGR -> REQ : action_manager_approve()
+activate REQ
+REQ -> REQ : contrôle : manager N+1 ou RH
+REQ -> REQ : write(state = 'manager_approved')
+REQ -> MAIL : activity_unlink() puis\nactivity_schedule(« Validation RH requise », RH)
+MAIL -> SMTP : e-mail d'activité au RH
+deactivate REQ
+
+== Validation RH ==
+RH -> REQ : action_hr_approve()
+activate REQ
+REQ -> REQ : justificatif présent si requis
+REQ -> REQ : write(state = 'approved')
+REQ -> HRE : recalcul de leave_taken / leave_balance
+REQ -> MAIL : message_post(« ✅ Demande approuvée », employé)
+MAIL -> SMTP : e-mail de décision à l'employé
+REQ --> RH : état « Approuvé »
+deactivate REQ
+
+@enduml

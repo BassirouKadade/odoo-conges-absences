@@ -1,0 +1,34 @@
+@startuml uc_3_administration
+!include _style.iuml
+title Cas d'utilisation – Gestion RH, administration et traitements automatiques
+
+actor "Responsable RH\n(admin fonctionnel)" as RH
+actor "Administrateur\nsystème" as ADM
+actor "Système\n(Cron)" as SYS
+
+rectangle "Gestion RH (fonctionnel)" {
+  usecase "Ajuster le solde\nd'un employé" as UC_ADJUST
+  usecase "Consulter les statistiques\n(graphiques)" as UC_STATS
+  usecase "Paramétrer types de congés,\nmotifs et règles" as UC_PARAM
+}
+
+rectangle "Administration technique" {
+  usecase "Installer / mettre à jour\nle module" as UC_INSTALL
+  usecase "Gérer les utilisateurs\net groupes de sécurité" as UC_USERS
+  usecase "Définir la hiérarchie\n(manager de chaque employé)" as UC_HIER
+}
+
+rectangle "Traitements automatiques" {
+  usecase "Acquérir 1,5 j / mois\nde congé payé" as UC_ACCRUAL
+}
+
+RH -- UC_ADJUST
+RH -- UC_STATS
+RH -- UC_PARAM
+
+ADM -- UC_INSTALL
+ADM -- UC_USERS
+ADM -- UC_HIER
+
+UC_ACCRUAL -- SYS
+@enduml

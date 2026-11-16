@@ -1,0 +1,73 @@
+@startuml diagramme_etats_transitions
+' ============================================================
+'  Diagramme d'états-transitions
+'  Cycle de vie d'une demande (insea.leave.request, champ "state")
+' ============================================================
+
+skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam ArrowColor #555555
+skinparam state {
+  BackgroundColor #F5F9FF
+  BorderColor #3A6EA5
+  BackgroundColor<<final>> #D9F2D9
+  BorderColor<<final>> #2E8B57
+  BackgroundColor<<refus>> #F9DCDC
+  BorderColor<<refus>> #B03A3A
+}
+
+title Cycle de vie d'une demande d'absence / de congé
+
+state "Brouillon\n(draft)" as DRAFT
+DRAFT : entry / créée par l'employé
+DRAFT : do / saisir type, dates, motif
+DRAFT : do / téléverser les justificatifs
+DRAFT : modifiable par l'employé
+
+state "Soumis\n(submitted)" as SUBMITTED
+SUBMITTED : entry / exécuter les contrôles
+SUBMITTED : entry / notifier le manager N+1
+SUBMITTED : non modifiable par l'employé
+
+state "Validé manager\n(manager_approved)" as MGR_OK
+MGR_OK : entry / notifier le Responsable RH
+MGR_OK : attente de la validation RH
+
+state "Approuvé\n(approved)" as APPROVED <<final>>
+APPROVED : entry / notifier l'employé
+APPROVED : entry / déduire le solde [congé payé]
+
+state "Refusé\n(refused)" as REFUSED <<refus>>
+REFUSED : entry / enregistrer le motif de refus
+REFUSED : entry / notifier l'employé
+
+[*] -down-> DRAFT : créer()
+
+DRAFT -down-> SUBMITTED : soumettre()\n[durée valide ∧ pas de chevauchement\n∧ solde suffisant (congé payé)\n∧ délai ≥ 7 j (congé payé > 3 j)\n∧ plafond 3 sorties / 8 h (sortie)]
+
+DRAFT -left-> [*] : supprimer()
+
+SUBMITTED -down-> APPROVED : approuver_manager()\n[autorisation de sortie ≤ 4 h]
+SUBMITTED -down-> MGR_OK : approuver_manager()\n[congé payé / exceptionnel / maladie]
+SUBMITTED -down-> REFUSED : refuser() / motif obligatoire
+
+MGR_OK -down-> APPROVED : valider_rh()\n[justificatif joint si requis]
+MGR_OK --> REFUSED : refuser() / motif obligatoire
+
+REFUSED -up-> DRAFT : remettre_en_brouillon()\n(par l'employé, pour corriger)
+
+APPROVED -down-> [*]
+REFUSED -down-> [*]
+
+note right of SUBMITTED
+  Seul le **manager N+1**
+  de l'employé peut
+  approuver ou refuser.
+end note
+
+note right of MGR_OK
+  Seul le **Responsable RH**
+  peut valider ou refuser.
+end note
+
+@enduml

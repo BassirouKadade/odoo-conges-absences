@@ -1,0 +1,40 @@
+@startuml uc_1_demandes
+!include _style.iuml
+title Cas d'utilisation – Demandes de l'employé et contrôles
+
+actor "Employé" as EMP
+actor "Système\n(Odoo)" as SYS
+
+rectangle "Gestion des demandes" {
+  usecase "Créer une demande\n(brouillon)" as UC_CREATE
+  usecase "Demander une\nautorisation de sortie" as UC_SORTIE
+  usecase "Demander un congé\n(payé / exceptionnel / maladie)" as UC_CONGE
+  usecase "Téléverser un\njustificatif" as UC_JUSTIF
+  usecase "Modifier / supprimer\nun brouillon" as UC_EDIT
+  usecase "Soumettre\nune demande" as UC_SUBMIT
+  usecase "Consulter ses demandes\net son solde" as UC_MYREQ
+
+  usecase "Vérifier la cohérence\nde la demande" as UC_CHECK
+  usecase "Contrôler le\nnon-chevauchement" as UC_OVER
+  usecase "Contrôler le\nsolde disponible" as UC_SOLDE
+  usecase "Contrôler le délai\nde prévenance (7 j)" as UC_DELAI
+  usecase "Contrôler le plafond mensuel\n(3 sorties / 8 h, ≤ 4 h)" as UC_PLAF
+}
+
+EMP -- UC_CREATE
+EMP -- UC_EDIT
+EMP -- UC_SUBMIT
+EMP -- UC_MYREQ
+
+UC_SORTIE -up-|> UC_CREATE
+UC_CONGE  -up-|> UC_CREATE
+UC_JUSTIF ..> UC_CREATE : <<extend>>\n[motif médical,\nmaladie, familial]
+
+UC_SUBMIT ..> UC_CHECK : <<include>>
+UC_CHECK  ..> UC_OVER  : <<include>>
+UC_SOLDE  ..> UC_CHECK : <<extend>>\n[congé payé]
+UC_DELAI  ..> UC_CHECK : <<extend>>\n[congé payé > 3 j]
+UC_PLAF   ..> UC_CHECK : <<extend>>\n[autorisation\nde sortie]
+
+UC_CHECK -- SYS
+@enduml

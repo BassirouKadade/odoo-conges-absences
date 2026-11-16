@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="insea_leave_refuse_wizard_view_form" model="ir.ui.view">
+        <field name="name">insea.leave.refuse.wizard.form</field>
+        <field name="model">insea.leave.refuse.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Refuser la demande">
+                <group>
+                    <field name="request_id" readonly="1"/>
+                    <field name="reason" placeholder="Expliquez à l'employé pourquoi sa demande est refusée…"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_refuse" type="object" string="Confirmer le refus"
+                            class="btn-danger" data-hotkey="q"/>
+                    <button string="Annuler" special="cancel" class="btn-secondary" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

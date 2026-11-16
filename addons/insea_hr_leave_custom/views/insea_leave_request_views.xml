@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- =============================================================
+         FORMULAIRE : statusbar interactive + boutons selon le rôle
+         ============================================================= -->
+    <record id="insea_leave_request_view_form" model="ir.ui.view">
+        <field name="name">insea.leave.request.form</field>
+        <field name="model">insea.leave.request</field>
+        <field name="arch" type="xml">
+            <form string="Demande d'absence">
+                <header>
+                    <!-- Employé : soumettre / corriger -->
+                    <button name="action_submit" type="object" string="Soumettre"
+                            class="btn-primary"
+                            invisible="state != 'draft' or not (is_owner or is_hr_user)"/>
+                    <button name="action_reset_draft" type="object" string="Remettre en brouillon"
+                            invisible="state != 'refused' or not (is_owner or is_hr_user)"/>
+                    <!-- Manager N+1 -->
+                    <button name="action_manager_approve" type="object" string="Approuver"
+                            class="btn-primary"
+                            invisible="not can_manager_approve"/>
+                    <!-- Responsable RH -->
+                    <button name="action_hr_approve" type="object" string="Valider (RH)"
+                            class="btn-primary"
+                            invisible="not can_hr_approve"/>
+                    <!-- Manager ou RH -->
+                    <button name="action_refuse" type="object" string="Refuser"
+                            class="btn-secondary"
+                            invisible="not can_refuse"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,manager_approved,approved"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Approuvé" bg_color="text-bg-success"
+                            invisible="state != 'approved'"/>
+                    <widget name="web_ribbon" title="Refusé" bg_color="text-bg-danger"
+                            invisible="state != 'refused'"/>
+
+                    <div class="oe_title">
+                        <label for="name" string="Référence"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <!-- Champs techniques utilisés par les conditions d'affichage -->
+                    <field name="is_owner" invisible="1"/>
+                    <field name="is_hr_user" invisible="1"/>
+                    <field name="can_manager_approve" invisible="1"/>
+                    <field name="can_hr_approve" invisible="1"/>
+                    <field name="can_refuse" invisible="1"/>
+                    <field name="category" invisible="1"/>
+                    <field name="attachment_required" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+
+                    <group>
+                        <group string="Demandeur">
+                            <field name="employee_id"
+                                   readonly="state != 'draft' or not is_hr_user"
+                                   options="{'no_create': True}"/>
+                            <field name="department_id"/>
+                            <field name="manager_id"/>
+                            <field name="employee_leave_balance" invisible="category != 'paid'"
+                                   decoration-danger="employee_leave_balance &lt;= 0"/>
+                        </group>
+                        <group string="Demande">
+                            <field name="leave_type_id" readonly="state != 'draft'"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="reason_id" readonly="state != 'draft'"
+                                   invisible="category != 'exit_permission'"
+                                   required="category == 'exit_permission'"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="date_from" readonly="state != 'draft'"/>
+                            <field name="date_to" readonly="state != 'draft'"/>
+                            <field name="duration_hours" widget="float_time"
+                                   invisible="category != 'exit_permission'"/>
+                            <field name="duration_days"
+                                   invisible="category == 'exit_permission'"/>
+                        </group>
+                    </group>
+
+                    <div class="alert alert-info" role="status"
+                         invisible="state != 'draft' or category != 'exit_permission'">
+                        <strong>Autorisation de sortie :</strong> 4 heures maximum, le même jour ;
+                        au plus 3 sorties ou 8 heures cumulées par mois.
+                    </div>
+                    <div class="alert alert-info" role="status"
+                         invisible="state != 'draft' or category != 'paid'">
+                        <strong>Congé payé :</strong> la durée est déduite de votre solde après
+                        validation RH. Au-delà de 3 jours, la demande doit être soumise au moins
+                        7 jours à l'avance.
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not attachment_required or attachment_ids or state in ('approved', 'refused')">
+                        <strong>Justificatif obligatoire :</strong>
+                        joignez un fichier (PDF ou image) avant la validation finale.
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'refused'">
+                        <strong>Motif du refus :</strong> <field name="refuse_reason" class="d-inline"/>
+                    </div>
+
+                    <notebook>
+                        <page string="Justificatifs" name="attachments">
+                            <field name="attachment_ids" widget="many2many_binary"
+                                   readonly="state in ('approved', 'refused')"/>
+                        </page>
+                        <page string="Commentaire" name="description">
+                            <field name="description" readonly="state != 'draft'"
+                                   placeholder="Précisions éventuelles sur la demande…"/>
+                        </page>
+                        <page string="Suivi de validation" name="validation">
+                            <group>
+                                <group>
+                                    <field name="submit_date"/>
+                                    <field name="manager_validator_id"/>
+                                </group>
+                                <group>
+                                    <field name="hr_validator_id"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- =============================================================
+         LISTE
+         ============================================================= -->
+    <record id="insea_leave_request_view_list" model="ir.ui.view">
+        <field name="name">insea.leave.request.list</field>
+        <field name="model">insea.leave.request</field>
+        <field name="arch" type="xml">
+            <list string="Demandes d'absence"
+                  decoration-muted="state == 'draft'"
+                  decoration-danger="state == 'refused'">
+                <field name="name"/>
+                <field name="employee_id" widget="many2one_avatar_employee"/>
+                <field name="department_id" optional="hide"/>
+                <field name="leave_type_id"/>
+                <field name="reason_id" optional="show"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="category" column_invisible="True"/>
+                <field name="duration_hours" widget="float_time" optional="show" sum="Total heures"
+                       invisible="category != 'exit_permission'"/>
+                <field name="duration_days" optional="show" sum="Total jours"
+                       invisible="category == 'exit_permission'"/>
+                <field name="manager_id" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ('submitted', 'manager_approved')"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'refused'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =============================================================
+         KANBAN (regroupé par état : vue « tableau de bord »)
+         ============================================================= -->
+    <record id="insea_leave_request_view_kanban" model="ir.ui.view">
+        <field name="name">insea.leave.request.kanban</field>
+        <field name="model">insea.leave.request</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" group_create="false" group_delete="false"
+                    group_edit="false" records_draggable="false" quick_create="false"
+                    class="o_kanban_small_column">
+                <field name="category"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between">
+                            <field name="name" class="fw-bold"/>
+                            <field name="state" widget="label_selection"
+                                   options="{'classes': {'draft': 'default', 'submitted': 'warning', 'manager_approved': 'warning', 'approved': 'success', 'refused': 'danger'}}"/>
+                        </div>
+                        <field name="leave_type_id"/>
+                        <div class="text-muted small">
+                            <field name="date_from"/> → <field name="date_to"/>
+                        </div>
+                        <footer class="pt-1">
+                            <div class="d-flex align-items-center gap-1">
+                                <field name="employee_id" widget="many2one_avatar_employee"/>
+                                <field name="employee_id"/>
+                            </div>
+                            <div class="ms-auto small">
+                                <t t-if="record.category.raw_value == 'exit_permission'">
+                                    <field name="duration_hours" widget="float_time"/> h
+                                </t>
+                                <t t-else="">
+                                    <field name="duration_days"/> j
+                                </t>
+                            </div>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- =============================================================
+         CALENDRIER : visibilité des départs
+         ============================================================= -->
+    <record id="insea_leave_request_view_calendar" model="ir.ui.view">
+        <field name="name">insea.leave.request.calendar</field>
+        <field name="model">insea.leave.request</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendrier des absences"
+                      date_start="date_from" date_stop="date_to"
+                      color="employee_id" mode="month"
+                      quick_create="false" event_open_popup="true">
+                <field name="employee_id" avatar_field="avatar_128" filters="1"/>
+                <field name="leave_type_id" filters="1"/>
+                <field name="state"/>
+                <field name="duration_days"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- =============================================================
+         TABLEAU CROISÉ ET GRAPHIQUE
+         ============================================================= -->
+    <record id="insea_leave_request_view_pivot" model="ir.ui.view">
+        <field name="name">insea.leave.request.pivot</field>
+        <field name="model">insea.leave.request</field>
+        <field name="arch" type="xml">
+            <pivot string="Analyse des absences" sample="1">
+                <field name="employee_id" type="row"/>
+                <field name="leave_type_id" type="col"/>
+                <field name="duration_days" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="insea_leave_request_view_graph" model="ir.ui.view">
+        <field name="name">insea.leave.request.graph</field>
+        <field name="model">insea.leave.request</field>
+        <field name="arch" type="xml">
+            <graph string="Absences par type" type="bar" stacked="1" sample="1">
+                <field name="date_from" interval="month"/>
+                <field name="leave_type_id"/>
+                <field name="duration_days" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- =============================================================
+         RECHERCHE : filtres et regroupements
+         ============================================================= -->
+    <record id="insea_leave_request_view_search" model="ir.ui.view">
+        <field name="name">insea.leave.request.search</field>
+        <field name="model">insea.leave.request</field>
+        <field name="arch" type="xml">
+            <search string="Rechercher une demande">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="leave_type_id"/>
+                <field name="manager_id"/>
+
+                <filter name="filter_my" string="Mes demandes"
+                        domain="[('user_id', '=', uid)]"/>
+                <filter name="filter_my_team" string="Mon équipe"
+                        domain="[('manager_id.user_id', '=', uid)]"/>
+                <separator/>
+                <filter name="filter_to_approve_manager" string="À approuver (manager)"
+                        domain="[('state', '=', 'submitted'), ('manager_id.user_id', '=', uid)]"/>
+                <filter name="filter_to_approve_hr" string="À valider (RH)"
+                        domain="[('state', '=', 'manager_approved')]"
+                        groups="insea_hr_leave_custom.group_leave_hr"/>
+                <separator/>
+                <filter name="filter_draft" string="Brouillons" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_in_progress" string="En cours de validation"
+                        domain="[('state', 'in', ('submitted', 'manager_approved'))]"/>
+                <filter name="filter_approved" string="Approuvées" domain="[('state', '=', 'approved')]"/>
+                <filter name="filter_refused" string="Refusées" domain="[('state', '=', 'refused')]"/>
+                <separator/>
+                <filter name="filter_exit" string="Autorisations de sortie"
+                        domain="[('category', '=', 'exit_permission')]"/>
+                <filter name="filter_leave" string="Congés"
+                        domain="[('category', '!=', 'exit_permission')]"/>
+                <separator/>
+                <filter name="filter_date_from" string="Date de début" date="date_from"/>
+
+                <group>
+                    <filter name="group_employee" string="Employé" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_department" string="Département" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_type" string="Type" context="{'group_by': 'leave_type_id'}"/>
+                    <filter name="group_state" string="État" context="{'group_by': 'state'}"/>
+                    <filter name="group_month" string="Mois" context="{'group_by': 'date_from:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- =============================================================
+         ACTIONS
+         ============================================================= -->
+    <record id="action_insea_leave_request_my" model="ir.actions.act_window">
+        <field name="name">Mes demandes</field>
+        <field name="res_model">insea.leave.request</field>
+        <field name="view_mode">list,form,kanban,calendar</field>
+        <field name="search_view_id" ref="insea_leave_request_view_search"/>
+        <field name="domain">[('user_id', '=', uid)]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Créer votre première demande</p>
+            <p>Demandez une autorisation de sortie (≤ 4 h) ou un congé, joignez vos
+               justificatifs puis soumettez la demande à votre manager.</p>
+        </field>
+    </record>
+
+    <record id="action_insea_leave_request_to_approve" model="ir.actions.act_window">
+        <field name="name">Demandes à valider</field>
+        <field name="res_model">insea.leave.request</field>
+        <field name="view_mode">list,form,kanban,calendar</field>
+        <field name="search_view_id" ref="insea_leave_request_view_search"/>
+        <field name="domain">[('state', 'in', ('submitted', 'manager_approved')), ('user_id', '!=', uid)]</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune demande en attente</p>
+            <p>Les demandes soumises par votre équipe apparaîtront ici.</p>
+        </field>
+    </record>
+
+    <record id="action_insea_leave_request_all" model="ir.actions.act_window">
+        <field name="name">Toutes les demandes</field>
+        <field name="res_model">insea.leave.request</field>
+        <field name="view_mode">list,kanban,calendar,pivot,graph,form</field>
+        <field name="search_view_id" ref="insea_leave_request_view_search"/>
+        <field name="context">{}</field>
+    </record>
+
+    <record id="action_insea_leave_request_calendar" model="ir.actions.act_window">
+        <field name="name">Calendrier des absences</field>
+        <field name="res_model">insea.leave.request</field>
+        <field name="view_mode">calendar,list,form</field>
+        <field name="search_view_id" ref="insea_leave_request_view_search"/>
+        <field name="domain">[('state', 'not in', ('draft', 'refused'))]</field>
+        <field name="context">{}</field>
+    </record>
+
+    <record id="action_insea_leave_request_report" model="ir.actions.act_window">
+        <field name="name">Analyse des absences</field>
+        <field name="res_model">insea.leave.request</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="search_view_id" ref="insea_leave_request_view_search"/>
+        <field name="context">{'search_default_filter_approved': 1}</field>
+    </record>
+</odoo>

@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_insea_leave_request_employee,insea.leave.request employe,model_insea_leave_request,group_leave_employee,1,1,1,1
+access_insea_leave_request_hr,insea.leave.request rh,model_insea_leave_request,group_leave_hr,1,1,1,1
+access_insea_leave_type_employee,insea.leave.type employe,model_insea_leave_type,group_leave_employee,1,0,0,0
+access_insea_leave_type_hr,insea.leave.type rh,model_insea_leave_type,group_leave_hr,1,1,1,1
+access_insea_leave_reason_employee,insea.leave.reason employe,model_insea_leave_reason,group_leave_employee,1,0,0,0
+access_insea_leave_reason_hr,insea.leave.reason rh,model_insea_leave_reason,group_leave_hr,1,1,1,1
+access_insea_leave_accrual_employee,insea.leave.accrual employe,model_insea_leave_accrual,group_leave_employee,1,0,0,0
+access_insea_leave_accrual_hr,insea.leave.accrual rh,model_insea_leave_accrual,group_leave_hr,1,1,1,1
+access_insea_leave_refuse_wizard_manager,insea.leave.refuse.wizard manager,model_insea_leave_refuse_wizard,group_leave_manager,1,1,1,0

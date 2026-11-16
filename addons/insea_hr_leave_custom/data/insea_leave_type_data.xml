@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- ===================== Types de demandes ===================== -->
+    <record id="leave_type_exit" model="insea.leave.type">
+        <field name="name">Autorisation de sortie</field>
+        <field name="code">SORTIE</field>
+        <field name="sequence">1</field>
+        <field name="category">exit_permission</field>
+        <field name="affects_balance" eval="False"/>
+        <field name="requires_attachment" eval="False"/>
+        <field name="requires_hr_validation" eval="False"/>
+    </record>
+
+    <record id="leave_type_paid" model="insea.leave.type">
+        <field name="name">Congé payé annuel</field>
+        <field name="code">CP</field>
+        <field name="sequence">10</field>
+        <field name="category">paid</field>
+        <field name="affects_balance" eval="True"/>
+        <field name="requires_attachment" eval="False"/>
+    </record>
+
+    <record id="leave_type_marriage" model="insea.leave.type">
+        <field name="name">Congé exceptionnel - Mariage</field>
+        <field name="code">EXC_MAR</field>
+        <field name="sequence">20</field>
+        <field name="category">exceptional</field>
+        <field name="requires_attachment" eval="True"/>
+        <field name="max_days">4</field>
+    </record>
+
+    <record id="leave_type_birth" model="insea.leave.type">
+        <field name="name">Congé exceptionnel - Naissance</field>
+        <field name="code">EXC_NAI</field>
+        <field name="sequence">21</field>
+        <field name="category">exceptional</field>
+        <field name="requires_attachment" eval="True"/>
+        <field name="max_days">3</field>
+    </record>
+
+    <record id="leave_type_death" model="insea.leave.type">
+        <field name="name">Congé exceptionnel - Décès</field>
+        <field name="code">EXC_DEC</field>
+        <field name="sequence">22</field>
+        <field name="category">exceptional</field>
+        <field name="requires_attachment" eval="True"/>
+        <field name="max_days">3</field>
+    </record>
+
+    <record id="leave_type_sick" model="insea.leave.type">
+        <field name="name">Congé maladie</field>
+        <field name="code">MAL</field>
+        <field name="sequence">30</field>
+        <field name="category">sick</field>
+        <field name="requires_attachment" eval="True"/>
+    </record>
+
+    <!-- ===================== Motifs des autorisations de sortie ===================== -->
+    <record id="leave_reason_medical" model="insea.leave.reason">
+        <field name="name">Consultation médicale</field>
+        <field name="leave_type_id" ref="leave_type_exit"/>
+        <field name="sequence">1</field>
+        <field name="requires_attachment" eval="True"/>
+    </record>
+
+    <record id="leave_reason_admin" model="insea.leave.reason">
+        <field name="name">Démarche administrative</field>
+        <field name="leave_type_id" ref="leave_type_exit"/>
+        <field name="sequence">2</field>
+    </record>
+
+    <record id="leave_reason_urgent" model="insea.leave.reason">
+        <field name="name">Urgence personnelle</field>
+        <field name="leave_type_id" ref="leave_type_exit"/>
+        <field name="sequence">3</field>
+    </record>
+</odoo>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ===================== Types de congés ===================== -->
+    <record id="insea_leave_type_view_list" model="ir.ui.view">
+        <field name="name">insea.leave.type.list</field>
+        <field name="model">insea.leave.type</field>
+        <field name="arch" type="xml">
+            <list string="Types de congés">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="category"/>
+                <field name="affects_balance"/>
+                <field name="requires_attachment"/>
+                <field name="requires_hr_validation"/>
+                <field name="max_days"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="insea_leave_type_view_form" model="ir.ui.view">
+        <field name="name">insea.leave.type.form</field>
+        <field name="model">insea.leave.type</field>
+        <field name="arch" type="xml">
+            <form string="Type de congé">
+                <sheet>
+                    <widget name="web_ribbon" title="Archivé" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="active" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="ex : Congé payé annuel"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identification">
+                            <field name="code"/>
+                            <field name="category"/>
+                            <field name="max_days"/>
+                        </group>
+                        <group string="Règles">
+                            <field name="affects_balance"/>
+                            <field name="requires_attachment"/>
+                            <field name="requires_hr_validation"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Motifs" name="reasons">
+                            <field name="reason_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="requires_attachment"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_insea_leave_type" model="ir.actions.act_window">
+        <field name="name">Types de congés</field>
+        <field name="res_model">insea.leave.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ===================== Motifs ===================== -->
+    <record id="insea_leave_reason_view_list" model="ir.ui.view">
+        <field name="name">insea.leave.reason.list</field>
+        <field name="model">insea.leave.reason</field>
+        <field name="arch" type="xml">
+            <list string="Motifs" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="leave_type_id"/>
+                <field name="requires_attachment"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_insea_leave_reason" model="ir.actions.act_window">
+        <field name="name">Motifs</field>
+        <field name="res_model">insea.leave.reason</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- ===================== Acquisitions de congés ===================== -->
+    <record id="insea_leave_accrual_view_list" model="ir.ui.view">
+        <field name="name">insea.leave.accrual.list</field>
+        <field name="model">insea.leave.accrual</field>
+        <field name="arch" type="xml">
+            <list string="Acquisitions de congés" editable="top">
+                <field name="date"/>
+                <field name="employee_id" widget="many2one_avatar_employee"/>
+                <field name="type"/>
+                <field name="days" sum="Total"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="insea_leave_accrual_view_search" model="ir.ui.view">
+        <field name="name">insea.leave.accrual.search</field>
+        <field name="model">insea.leave.accrual</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="employee_id"/>
+                <filter name="filter_monthly" string="Acquisitions mensuelles" domain="[('type', '=', 'monthly')]"/>
+                <filter name="filter_manual" string="Ajustements RH" domain="[('type', '=', 'manual_adjustment')]"/>
+                <separator/>
+                <filter name="filter_date" string="Date" date="date"/>
+                <group>
+                    <filter name="group_employee" string="Employé" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_month" string="Mois" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_insea_leave_accrual" model="ir.actions.act_window">
+        <field name="name">Acquisitions et ajustements</field>
+        <field name="res_model">insea.leave.accrual</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_group_employee': 1}</field>
+    </record>
+</odoo>

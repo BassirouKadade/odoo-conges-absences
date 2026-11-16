@@ -1,0 +1,35 @@
+# Fichiers contenant les mots de passe : ne pas versionner
+.env
+config/odoo.conf
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Rendus des diagrammes (régénérables depuis les .puml)
+docs/out/
+
+# Éditeurs / OS
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+.DS_Store
+
+# Sauvegardes locales
+*.sql
+*.dump
+backups/
+
+# LaTeX (fichiers intermédiaires du rapport ; le PDF est conservé)
+docs/rapport/*.aux
+docs/rapport/*.log
+docs/rapport/*.toc
+docs/rapport/*.out
+docs/rapport/*.fls
+docs/rapport/*.fdb_latexmk
+docs/rapport/*.synctex.gz
+
+# Documents non publiés : énoncé de l'enseignant, rapport d'un autre projet
+docs/sujet/
+docs/report.pdf

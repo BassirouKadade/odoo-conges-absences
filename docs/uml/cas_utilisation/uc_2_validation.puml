@@ -1,0 +1,41 @@
+@startuml uc_2_validation
+!include _style.iuml
+title Cas d'utilisation – Circuit de validation
+
+actor "Manager (N+1)" as MGR
+actor "Responsable RH" as RH
+actor "Système\n(Odoo)" as SYS
+
+rectangle "Validation des demandes" {
+  usecase "Consulter les demandes\n(son équipe / toutes)" as UC_LIST
+  usecase "Consulter le calendrier\ndes absences" as UC_CAL
+  usecase "Approuver (niveau N+1)\n<size:11><i>finale si sortie ≤ 4 h</i></size>" as UC_APP_MGR
+  usecase "Valider (niveau RH)\n<size:11><i>congés > 1 jour</i></size>" as UC_APP_RH
+  usecase "Vérifier le\njustificatif" as UC_VERIF
+  usecase "Imputer le solde\nde congés" as UC_IMPUTE
+  usecase "Refuser\nune demande" as UC_REFUSE
+  usecase "Saisir le motif\nde refus" as UC_MOTIF
+  usecase "Notifier\nl'employé" as UC_NOTIFY
+}
+
+MGR -- UC_LIST
+MGR -- UC_CAL
+MGR -- UC_APP_MGR
+MGR -- UC_REFUSE
+
+RH -- UC_LIST
+RH -- UC_CAL
+RH -- UC_APP_RH
+RH -- UC_REFUSE
+
+UC_APP_RH  ..> UC_VERIF  : <<include>>
+UC_IMPUTE  ..> UC_APP_RH : <<extend>>\n[congé payé]
+UC_REFUSE  ..> UC_MOTIF  : <<include>>
+UC_APP_MGR ..> UC_NOTIFY : <<include>>
+UC_APP_RH  ..> UC_NOTIFY : <<include>>
+UC_REFUSE  ..> UC_NOTIFY : <<include>>
+
+UC_NOTIFY -- SYS
+UC_IMPUTE -- SYS
+
+@enduml

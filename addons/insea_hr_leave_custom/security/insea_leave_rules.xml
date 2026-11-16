@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Règles d'enregistrement (Record Rules).
+        Les règles de groupes différents s'additionnent (OU logique) :
+          - Employé : ses propres demandes
+          - Manager : + les demandes de son équipe (lecture / écriture pour valider)
+          - RH      : toutes les demandes
+    -->
+
+    <!-- ===================== Demandes ===================== -->
+    <record id="rule_leave_request_employee" model="ir.rule">
+        <field name="name">Demandes : l'employé ne voit que les siennes</field>
+        <field name="model_id" ref="model_insea_leave_request"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[Command.link(ref('group_leave_employee'))]"/>
+    </record>
+
+    <record id="rule_leave_request_manager" model="ir.rule">
+        <field name="name">Demandes : le manager voit celles de son équipe</field>
+        <field name="model_id" ref="model_insea_leave_request"/>
+        <field name="domain_force">[('employee_id.parent_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[Command.link(ref('group_leave_manager'))]"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_leave_request_hr" model="ir.rule">
+        <field name="name">Demandes : le RH voit tout</field>
+        <field name="model_id" ref="model_insea_leave_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[Command.link(ref('group_leave_hr'))]"/>
+    </record>
+
+    <!-- ===================== Acquisitions de congés ===================== -->
+    <record id="rule_leave_accrual_employee" model="ir.rule">
+        <field name="name">Acquisitions : l'employé ne voit que les siennes</field>
+        <field name="model_id" ref="model_insea_leave_accrual"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[Command.link(ref('group_leave_employee'))]"/>
+    </record>
+
+    <record id="rule_leave_accrual_hr" model="ir.rule">
+        <field name="name">Acquisitions : le RH voit tout</field>
+        <field name="model_id" ref="model_insea_leave_accrual"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[Command.link(ref('group_leave_hr'))]"/>
+    </record>
+
+    <!-- ===================== Multi-société (règle globale) ===================== -->
+    <record id="rule_leave_request_company" model="ir.rule">
+        <field name="name">Demandes : multi-société</field>
+        <field name="model_id" ref="model_insea_leave_request"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

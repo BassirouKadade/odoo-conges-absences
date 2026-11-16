@@ -1,0 +1,62 @@
+@startuml diagramme_deploiement
+' ============================================================
+'  Diagramme de déploiement : pile Docker Compose « insea-hr-leave »
+' ============================================================
+skinparam shadowing false
+skinparam defaultFontSize 12
+skinparam ArrowColor #555555
+skinparam node {
+  BackgroundColor #FCFCFC
+  BorderColor #9AAFC7
+}
+skinparam component {
+  BackgroundColor #F5F9FF
+  BorderColor #3A6EA5
+}
+skinparam database {
+  BackgroundColor #F5F9FF
+  BorderColor #3A6EA5
+}
+title Architecture de déploiement (Docker Compose, projet « insea-hr-leave »)
+
+node "Poste utilisateur" as PC {
+  component "Navigateur web" as NAV
+}
+
+node "Docker Desktop – réseau privé insea-hr-net" as DOCKER {
+  node "insea-hr-odoo\n(image odoo:19.0)" as ODOO {
+    component "Serveur Odoo\n(HTTP, ORM, cron)" as SRV
+    component "Module\ninsea_hr_leave_custom" as MOD
+    SRV ..> MOD : charge
+  }
+  node "insea-hr-db\n(image postgres:16)" as PG {
+    database "Base insea_hr\nBase insea_hr_test" as DB
+  }
+  node "insea-hr-mailpit\n(image axllent/mailpit:v1.21.8)" as MP {
+    component "SMTP :1025\nInterface web :8025" as MAILPIT
+  }
+  folder "Volumes" as VOL {
+    artifact "insea-hr-db-data" as V1
+    artifact "insea-hr-odoo-data\n(justificatifs, sessions)" as V2
+  }
+}
+
+folder "Dossier du projet (hôte)" as HOST {
+  artifact "./addons" as ADD
+  artifact "./config/odoo.conf" as CONF
+}
+
+NAV --> SRV : HTTP localhost:8070
+NAV --> MAILPIT : HTTP localhost:8025
+SRV --> DB : SQL :5432
+SRV --> MAILPIT : SMTP :1025
+DB .. V1
+SRV .. V2
+ADD ..> MOD : montage /mnt/extra-addons
+CONF ..> SRV : montage /etc/odoo
+
+note bottom of DB
+  Aucun port PostgreSQL
+  publié sur l'hôte
+end note
+@enduml

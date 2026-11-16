@@ -1,0 +1,34 @@
+; Copier ce fichier en odoo.conf puis adapter les valeurs :
+;   cp config/odoo.conf.example config/odoo.conf
+;
+; La connexion à PostgreSQL (hôte, utilisateur, mot de passe) est passée
+; par docker-compose.yml à partir du fichier .env : ne pas la mettre ici.
+
+[options]
+; Mot de passe maître : protège la création, sauvegarde et suppression
+; des bases depuis http://localhost:8070/web/database/manager
+admin_passwd = changeme
+
+; Écouter sur toutes les interfaces (sinon inaccessible hors du conteneur)
+http_interface = 0.0.0.0
+http_port = 8069
+
+; Modules complémentaires (dossier ./addons monté dans le conteneur)
+addons_path = /mnt/extra-addons
+data_dir = /var/lib/odoo
+
+; Afficher le gestionnaire de bases de données
+list_db = True
+
+; 0 = mode simple processus, suffisant en local
+workers = 0
+
+log_level = info
+
+; ===== E-mails sortants =====
+; Envoyés au conteneur Mailpit (serveur SMTP factice) : rien ne part sur Internet.
+; Boîte de réception web : http://localhost:8025
+smtp_server = mailpit
+smtp_port = 1025
+smtp_ssl = False
+email_from = Lambda RH <rh@lambda.ma>

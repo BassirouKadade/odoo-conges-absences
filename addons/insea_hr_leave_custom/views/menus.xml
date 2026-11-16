@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Arborescence des menus
+        Congés & Absences
+        ├── Mes demandes                      (tous les employés)
+        ├── Validation                        (manager, RH)
+        │   ├── Demandes à valider
+        │   └── Calendrier des absences
+        ├── Suivi RH                          (RH)
+        │   ├── Toutes les demandes
+        │   └── Analyse des absences
+        └── Configuration                     (RH = administrateur fonctionnel)
+            ├── Types de congés
+            ├── Motifs
+            └── Acquisitions et ajustements
+    -->
+    <menuitem id="menu_insea_leave_root"
+              name="Congés &amp; Absences"
+              web_icon="insea_hr_leave_custom,static/description/icon.png"
+              groups="group_leave_employee"
+              sequence="80"/>
+
+    <menuitem id="menu_insea_leave_my"
+              name="Mes demandes"
+              parent="menu_insea_leave_root"
+              action="action_insea_leave_request_my"
+              groups="group_leave_employee"
+              sequence="10"/>
+
+    <menuitem id="menu_insea_leave_validation"
+              name="Validation"
+              parent="menu_insea_leave_root"
+              groups="group_leave_manager"
+              sequence="20"/>
+    <menuitem id="menu_insea_leave_to_approve"
+              name="Demandes à valider"
+              parent="menu_insea_leave_validation"
+              action="action_insea_leave_request_to_approve"
+              groups="group_leave_manager"
+              sequence="10"/>
+    <menuitem id="menu_insea_leave_calendar"
+              name="Calendrier des absences"
+              parent="menu_insea_leave_validation"
+              action="action_insea_leave_request_calendar"
+              groups="group_leave_manager"
+              sequence="20"/>
+
+    <menuitem id="menu_insea_leave_hr"
+              name="Suivi RH"
+              parent="menu_insea_leave_root"
+              groups="group_leave_hr"
+              sequence="30"/>
+    <menuitem id="menu_insea_leave_all"
+              name="Toutes les demandes"
+              parent="menu_insea_leave_hr"
+              action="action_insea_leave_request_all"
+              groups="group_leave_hr"
+              sequence="10"/>
+    <menuitem id="menu_insea_leave_report"
+              name="Analyse des absences"
+              parent="menu_insea_leave_hr"
+              action="action_insea_leave_request_report"
+              groups="group_leave_hr"
+              sequence="20"/>
+
+    <menuitem id="menu_insea_leave_config"
+              name="Configuration"
+              parent="menu_insea_leave_root"
+              groups="group_leave_hr"
+              sequence="90"/>
+    <menuitem id="menu_insea_leave_type"
+              name="Types de congés"
+              parent="menu_insea_leave_config"
+              action="action_insea_leave_type"
+              groups="group_leave_hr"
+              sequence="10"/>
+    <menuitem id="menu_insea_leave_reason"
+              name="Motifs"
+              parent="menu_insea_leave_config"
+              action="action_insea_leave_reason"
+              groups="group_leave_hr"
+              sequence="20"/>
+    <menuitem id="menu_insea_leave_accrual"
+              name="Acquisitions et ajustements"
+              parent="menu_insea_leave_config"
+              action="action_insea_leave_accrual"
+              groups="group_leave_hr"
+              sequence="30"/>
+</odoo>

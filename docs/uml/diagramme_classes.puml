@@ -1,0 +1,201 @@
+@startuml diagramme_classes
+' ============================================================
+'  Diagramme de classes UML
+'  Module Odoo : insea_hr_leave_custom
+'
+'  Légende :
+'   - Gris  <<Odoo standard>>      : classe Odoo réutilisée telle quelle
+'   - Orange <<_inherit>>          : classe Odoo étendue par héritage (_inherit)
+'   - Vert  <<_name>>              : nouveau modèle créé sur-mesure (_name)
+'   - Bleu  <<TransientModel>>     : assistant (wizard) temporaire
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor<<Odoo standard>> #E6E6E6
+  BorderColor<<Odoo standard>> #7F7F7F
+  BackgroundColor<<_inherit>> #FFE4C4
+  BorderColor<<_inherit>> #D2691E
+  BackgroundColor<<_name>> #D9F2D9
+  BorderColor<<_name>> #2E8B57
+  BackgroundColor<<TransientModel>> #DCE9F9
+  BorderColor<<TransientModel>> #3A6EA5
+}
+
+' =================== Classes Odoo standard ===================
+package "Odoo standard (réutilisé)" {
+
+  class "res.users" as ResUsers <<Odoo standard>> {
+    {field} + name : Char
+    {field} + login : Char
+    {field} + group_ids : Many2many(res.groups)
+  }
+
+  class "res.groups" as ResGroups <<Odoo standard>> {
+    {field} + name : Char
+    {field} + implied_ids : Many2many(res.groups)
+  }
+
+  class "hr.department" as HrDepartment <<Odoo standard>> {
+    {field} + name : Char
+    {field} + manager_id : Many2one(hr.employee)
+  }
+
+  class "ir.attachment" as IrAttachment <<Odoo standard>> {
+    {field} + name : Char
+    {field} + datas : Binary
+    {field} + mimetype : Char
+    {field} + res_model : Char
+    {field} + res_id : Integer
+  }
+
+  abstract class "mail.thread" as MailThread <<Odoo standard>> {
+    + message_post()
+  }
+
+  abstract class "mail.activity.mixin" as MailActivity <<Odoo standard>>
+}
+
+' =================== Classe Odoo étendue ===================
+package "Odoo étendu (_inherit)" {
+
+  class "hr.employee" as HrEmployee <<_inherit>> {
+    .. champs standard ..
+    {field} + name : Char
+    {field} + user_id : Many2one(res.users)
+    {field} + parent_id : Many2one(hr.employee)   (manager N+1)
+    {field} + department_id : Many2one(hr.department)
+    .. champs ajoutés ..
+    {field} + leave_allocated : Float     <<compute>>   (somme des acquisitions)
+    {field} + leave_taken : Float         <<compute>>
+    {field} + leave_balance : Float       <<compute>>
+    {field} + leave_request_ids : One2many(insea.leave.request)
+    {field} + accrual_ids : One2many(insea.leave.accrual)
+    --
+    + _compute_leave_balance()      @api.depends
+    + _cron_monthly_accrual()   (+1,5 j / mois)
+  }
+}
+
+' =================== Nouveaux modèles ===================
+package "Modèles créés sur-mesure (_name)" {
+
+  class "insea.leave.type" as LeaveType <<_name>> {
+    {field} + name : Char
+    {field} + code : Char
+    {field} + category : Selection {exit_permission, paid, exceptional, sick}
+    {field} + affects_balance : Boolean
+    {field} + requires_attachment : Boolean
+    {field} + requires_hr_validation : Boolean
+    {field} + max_days : Float   (ex : mariage = 4)
+    {field} + active : Boolean
+    --
+    _code_unique : models.Constraint UNIQUE(code)
+  }
+
+  class "insea.leave.reason" as LeaveReason <<_name>> {
+    {field} + name : Char
+    {field} + leave_type_id : Many2one(insea.leave.type)
+    {field} + requires_attachment : Boolean   (ex : consultation médicale)
+  }
+
+  class "insea.leave.request" as LeaveRequest <<_name>> {
+    {field} + name : Char   (référence : séquence)
+    {field} + employee_id : Many2one(hr.employee)
+    {field} + user_id : Many2one(res.users)  <<related>>
+    {field} + manager_id : Many2one(hr.employee)  <<related>>
+    {field} + department_id : Many2one(hr.department)  <<related>>
+    {field} + company_id : Many2one(res.company)
+    {field} + leave_type_id : Many2one(insea.leave.type)
+    {field} + category : Selection          <<related>>
+    {field} + reason_id : Many2one(insea.leave.reason)
+    {field} + description : Text
+    .. période ..
+    {field} + date_from : Datetime
+    {field} + date_to : Datetime
+    {field} + duration_hours : Float        <<compute>>
+    {field} + duration_days : Float         <<compute>>   (jours ouvrés)
+    .. justificatif & workflow ..
+    {field} + attachment_ids : Many2many(ir.attachment)
+    {field} + attachment_required : Boolean <<compute>>
+    {field} + state : Selection {draft, submitted, manager_approved,\n  approved, refused}
+    {field} + refuse_reason : Text
+    {field} + manager_validator_id : Many2one(res.users)
+    {field} + hr_validator_id : Many2one(res.users)
+    {field} + submit_date : Datetime
+    --
+    + _compute_duration()           @api.depends
+    + _compute_attachment_required() @api.depends
+    + _check_reason_matches_type()  @api.constrains
+    + _check_max_days()             @api.constrains   (mariage 4 j…)
+    + _check_overlap()              @api.constrains
+    + _check_balance()              @api.constrains
+    + _check_notice_period()        @api.constrains
+    + _check_monthly_exit_limit()   @api.constrains
+    + _check_exit_duration()        @api.constrains   (≤ 4 h)
+    + action_submit()
+    + action_manager_approve()
+    + action_hr_approve()
+    + action_refuse()   (ouvre le wizard)
+    + action_reset_draft()
+    --
+    _date_check : models.Constraint CHECK(date_to > date_from)
+  }
+
+  class "insea.leave.accrual" as LeaveAccrual <<_name>> {
+    {field} + employee_id : Many2one(hr.employee)
+    {field} + date : Date
+    {field} + days : Float   (1,5 par défaut, ou ajustement RH)
+    {field} + type : Selection {monthly, manual_adjustment}
+    {field} + note : Char
+    --
+    _monthly_unique : models.UniqueIndex (employee_id, date) [type = monthly]
+  }
+}
+
+package "Assistant (wizard)" {
+  class "insea.leave.refuse.wizard" as RefuseWizard <<TransientModel>> {
+    {field} + request_id : Many2one(insea.leave.request)
+    {field} + reason : Text  {required}
+    --
+    + action_confirm_refuse()
+  }
+}
+
+' =================== Relations ===================
+
+' Héritage de comportement (mixins)
+LeaveRequest --|> MailThread
+LeaveRequest --|> MailActivity
+
+' Utilisateurs / groupes
+ResUsers "*" -- "*" ResGroups : appartient à >
+HrEmployee "0..1" -- "0..1" ResUsers : user_id >
+
+' Hiérarchie
+HrEmployee "*" --> "0..1" HrEmployee : parent_id (manager N+1)
+HrEmployee "*" --> "0..1" HrDepartment : department_id
+
+' Demandes
+HrEmployee "1" *-- "*" LeaveRequest : employee_id <
+LeaveRequest "*" --> "1" LeaveType : leave_type_id
+LeaveRequest "*" --> "0..1" LeaveReason : reason_id
+LeaveType "1" *-- "*" LeaveReason : leave_type_id <
+LeaveRequest "*" o-- "*" IrAttachment : attachment_ids
+LeaveRequest "*" --> "0..1" ResUsers : manager_validator_id\nhr_validator_id
+
+' Acquisition du solde
+HrEmployee "1" *-- "*" LeaveAccrual : employee_id <
+
+' Wizard de refus
+RefuseWizard "*" --> "1" LeaveRequest : request_id
+
+legend right
+  |= Couleur |= Signification |
+  |<#E6E6E6>| Classe Odoo standard réutilisée |
+  |<#FFE4C4>| Classe Odoo étendue (<U+005F>inherit) |
+  |<#D9F2D9>| Nouveau modèle (<U+005F>name) |
+  |<#DCE9F9>| Assistant TransientModel |
+endlegend
+
+@enduml

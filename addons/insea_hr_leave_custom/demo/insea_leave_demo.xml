@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Bases créées avec les données de démo : charge la société Lambda -->
+    <function model="insea.leave.demo" name="load"/>
+</odoo>

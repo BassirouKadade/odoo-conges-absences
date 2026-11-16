@@ -1,0 +1,19 @@
+' Style commun aux diagrammes de cas d'utilisation
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam ArrowColor #555555
+skinparam usecase {
+  BackgroundColor #F5F9FF
+  BorderColor #3A6EA5
+}
+skinparam rectangle {
+  BackgroundColor #FCFCFC
+  BorderColor #9AAFC7
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #C8B560
+}
